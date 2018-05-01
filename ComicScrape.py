@@ -26,6 +26,7 @@ def HigherOrderListSplit(sequence, l):
             result.append(g)
             g = []
         g.append(element)
+    result.append(g)
     return result
 
 def ScrapeComic(url):
@@ -39,42 +40,72 @@ def ScrapeComic(url):
     publisher_box = soup.find("a", attrs={"class": "test"})
     series_box = soup.find("span", attrs={"class": "page_headline"})
     issue_box = soup.find("span", attrs={"class": "page_subheadline"})
-    creators_box = HigherOrderListSplit (
+    creators_box = HigherOrderListSplit(
         Traverse(creators),
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
-    miscellaneous_box = HigherOrderListSplit (
+    miscellaneous_box = HigherOrderListSplit(
         Traverse(miscellaneous),
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
     comic = {
-        "Publisher" : publisher_box.text.strip(),
-        "Issue" : issue_box.text.strip().replace("\"", ""),
-        "Series" : series_box.text.strip().split(" - ")[0],
+        "Publisher": publisher_box.text.strip(),
+        "Issue": issue_box.text.strip().replace("\"", ""),
+        "Series": series_box.text.strip().split(" - ")[0],
         "Series Number": series_box.text.strip().split(" - ")[1]
     }
-    miscellaneous_box[9:10] = []
-    miscellaneous_box[7:8] = []
-    miscellaneous_box[2:5] = []
 
-    comic.update({ x[0][0:-1]: x[1:] for x in creators_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
-    comic.update({ x[0][0:-1]: x[1:] for x in miscellaneous_box})
+    comic.update({x[0][0:-1]: x[1:] for x in creators_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
+    comic.update({x[0][0:-1]: x[1:] for x in miscellaneous_box})   #Cover Date, Cover Price
+
     return comic
 
-#keep 1,2, 6,7,9
-
-def ComicToCsv(Comic):
-    return ",".join([str(x) for x in Comic.values()])
-
-with open("Comic.csv", "a") as csv_file:
+with open("Comics.csv", "a", newline = "") as csv_file:
     writer = csv.writer(csv_file)
 
-    writer.writerow(ScrapeComic("http://www.comicbookdb.com/issue.php?ID=" + str(1)).keys())
-    for ComicId in range(1, 3):
+    keyList = [
+        "Publisher",
+        "Issue",
+        "Series",
+        "Series Number",
+        "Writer(s)",
+        "Penciller(s)",
+        "Inker(s)",
+        "Colorist(s)",
+        "Letterer(s)",
+        "Editor(s)",
+        "Cover Artist(s)",
+        "Cover Date",
+        "Cover Price",
+        "Format",
+        "Synopsis",
+        "Story Arc(s)",
+        "Characters"
+    ]
+    writer.writerow(keyList)
+
+    for ComicID in range(1, 21):
         try:
-            print(ScrapeComic("http://www.comicbookdb.com/issue.php?ID=" + str(ComicId)))
-            writer.writerow(ScrapeComic("http://www.comicbookdb.com/issue.php?ID=" + str(ComicId)).values())
+            comic = ScrapeComic("http://www.comicbookdb.com/issue.php?ID=" + str(ComicID))
+
+            valueList = []
+
+            for key in keyList:
+                if type(comic[key]) is list:
+                    valueList.append(
+                        list(
+                            filter(
+                                lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x)),
+                                comic[key]
+                            )
+                        )
+                    )
+                else:
+                    valueList.append(comic[key])
+
+            writer.writerow(valueList)
             time.sleep(1)
-        except:
+        except Exception as e:
+            print(str(type(e)) + ": " + str(e))
             pass
