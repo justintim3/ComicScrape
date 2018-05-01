@@ -1,48 +1,25 @@
-#import libraries
 import urllib.request as urllib2
 import bs4
 import re
 import time
 import csv
+import ScrapeFunctions
 
-# traverses an HTML tag tree via depth first traversal
-def Traverse(Tags):
-    result = []
-    for tag in Tags:
-        if tag.string and tag.string.strip():
-            result.append(tag.string.strip())
-        elif hasattr(tag, "contents") and tag.contents:
-            result.extend(Traverse(tag.contents))
-        else:
-            pass
-    return result
-
-# splits a list into a list of sublists based on a lambda that returns a boolean
-def HigherOrderListSplit(sequence, l):
-    result = []
-    g = []
-    for element in sequence:
-        if l(element):
-            result.append(g)
-            g = []
-        g.append(element)
-    result.append(g)
-    return result
-
-def ScrapeCharacter(url):
-    page = urllib2.urlopen(url)
+def ScrapeCharacter(url, CharacterID):
+    page = urllib2.urlopen(url + CharacterID)
     soup = bs4.BeautifulSoup(page, "html.parser")
 
     name_box = soup.find("span", attrs={"class": "page_headline"})
     info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
-    info_box = HigherOrderListSplit (
-        Traverse(info),
+    info_box = ScrapeFunctions.HigherOrderListSplit (
+        ScrapeFunctions.Traverse(info),
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
     character = {}
     try:
-        character = {"Name": name_box.text.strip()}
+        character = {"CharacterID": CharacterID,
+            "Name": name_box.text.strip()}
     except Exception as e:
         pass
 
@@ -50,18 +27,11 @@ def ScrapeCharacter(url):
 
     return character
 
-def ListToString(list):
-    str = ""
-    for x in range(0, len(list)):
-        str += list[x]
-        if x < len(list) - 1:
-            str += ", "
-    return str
-
 with open("Characters.csv", "a", newline = "") as csv_file:
     writer = csv.writer(csv_file)
 
     keyList = [
+        "CharacterID",
         "Name",
         "Real Name",
         "Powers",
@@ -73,14 +43,14 @@ with open("Characters.csv", "a", newline = "") as csv_file:
 
     for CharacterID in range(1, 21):
         try:
-            character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=" + str(CharacterID))
+            character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=", str(CharacterID))
 
             valueList = []
 
             for key in keyList:
                 if key in character and type(character[key]) is list:
                     valueList.append(
-                        ListToString(
+                        ScrapeFunctions.ListToString(
                             list(
                                 filter(
                                     lambda x: not (re.compile(".*' on Amazon.*").match(x)),
