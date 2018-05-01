@@ -51,9 +51,9 @@ def ScrapeComic(url):
 
     comic = {
         "Publisher": publisher_box.text.strip(),
-        "Issue": issue_box.text.strip().replace("\"", ""),
         "Series": series_box.text.strip().split(" - ")[0],
-        "Series Number": series_box.text.strip().split(" - ")[1]
+        "Issue Number": series_box.text.strip().split(" - ")[1],
+        "Issue Title": issue_box.text.strip().replace("\"", "")
     }
 
     comic.update({x[0][0:-1]: x[1:] for x in creators_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
@@ -74,9 +74,9 @@ with open("Comics.csv", "a", newline = "") as csv_file:
 
     keyList = [
         "Publisher",
-        "Issue",
         "Series",
-        "Series Number",
+        "Issue Number",
+        "Issue Title",
         "Writer(s)",
         "Penciller(s)",
         "Inker(s)",
@@ -91,6 +91,7 @@ with open("Comics.csv", "a", newline = "") as csv_file:
         "Story Arc(s)",
         "Characters"
     ]
+    print(keyList)
     writer.writerow(keyList)
 
     for ComicID in range(1, 21):
@@ -114,10 +115,10 @@ with open("Comics.csv", "a", newline = "") as csv_file:
                 else:
                     valueList.append(comic[key])
 
-            #for x in range(0, len(valueList)):
+            print(valueList)
             writer.writerow(valueList)
 
             time.sleep(1)
         except Exception as e:
-            print(str(type(e)) + ": " + str(e))
+            #print(str(type(e)) + ": " + str(e))
             pass

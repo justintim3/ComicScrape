@@ -29,26 +29,23 @@ def HigherOrderListSplit(sequence, l):
     result.append(g)
     return result
 
-def ScrapeCharacter(url):
+def ScrapeCreator(url):
     page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
 
+    info = soup.find_all("td", attrs={"valign": "top", "width": "850", "align": "left"})
     name_box = soup.find("span", attrs={"class": "page_headline"})
-    info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
-    info_box = HigherOrderListSplit (
+
+    info_box = HigherOrderListSplit(
         Traverse(info),
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
-    character = {}
-    try:
-        character = {"Name": name_box.text.strip()}
-    except Exception as e:
-        pass
+    creator = {"Name": name_box.text.strip()}
 
-    character.update({x[0][0:-1]: x[1:] for x in info_box})         #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
-
-    return character
+    creator.update({x[0][0:-1]: x[1:] for x in info_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
+    #print(creator)
+    return creator
 
 def ListToString(list):
     str = ""
@@ -58,47 +55,49 @@ def ListToString(list):
             str += ", "
     return str
 
-with open("Characters.csv", "a", newline = "") as csv_file:
+with open("Creator.csv", "a", newline = "") as csv_file:
     writer = csv.writer(csv_file)
 
     keyList = [
         "Name",
-        "Real Name",
-        "Powers",
-        "Weaknesses",
-        "Bio"
+        "Bio",
+        "Date of Birth",
+        "Birthplace"
+        #"Writer",
+        #"Penciller",
+        #"Inker",
+        #"Colorist(",
+        #"Letterer",
+        #"Editor",
+        #"Cover Artist"
     ]
     print(keyList)
     writer.writerow(keyList)
 
-    for CharacterID in range(1, 21):
+    for CreatorID in range(1, 3):
         try:
-            character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=" + str(CharacterID))
+            creator = ScrapeCreator("http://www.comicbookdb.com/creator.php?ID=" + str(CreatorID))
 
+            print(creator)
             valueList = []
 
             for key in keyList:
-                if key in character and type(character[key]) is list:
+                if type(creator[key]) is list:
                     valueList.append(
                         ListToString(
                             list(
                                 filter(
                                     lambda x: not (re.compile(".*' on Amazon.*").match(x)),
-                                    character[key]
+                                    creator[key]
                                 )
                             )
                         )
                     )
-                elif key in character:
-                    valueList.append(character[key])
                 else:
-                    valueList.append(None)
+                    valueList.append(creator[key])
 
-            for x in range(0, len(valueList)):
-                if valueList[x] is not None:
-                    print(valueList)
-                    writer.writerow(valueList)
-                    break
+            print(valueList)
+            writer.writerow(valueList)
 
             time.sleep(1)
         except Exception as e:
