@@ -61,6 +61,14 @@ def ScrapeComic(url):
 
     return comic
 
+def ListToString(list):
+    str = ""
+    for x in range(0, len(list)):
+        str += list[x]
+        if x < len(list) - 1:
+            str += ", "
+    return str
+
 with open("Comics.csv", "a", newline = "") as csv_file:
     writer = csv.writer(csv_file)
 
@@ -94,17 +102,21 @@ with open("Comics.csv", "a", newline = "") as csv_file:
             for key in keyList:
                 if type(comic[key]) is list:
                     valueList.append(
-                        list(
-                            filter(
-                                lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x)),
-                                comic[key]
+                        ListToString(
+                            list(
+                                filter(
+                                    lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x)),
+                                    comic[key]
+                                )
                             )
                         )
                     )
                 else:
                     valueList.append(comic[key])
 
+            #for x in range(0, len(valueList)):
             writer.writerow(valueList)
+
             time.sleep(1)
         except Exception as e:
             print(str(type(e)) + ": " + str(e))

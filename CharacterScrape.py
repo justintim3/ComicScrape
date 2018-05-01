@@ -50,6 +50,14 @@ def ScrapeCharacter(url):
 
     return character
 
+def ListToString(list):
+    str = ""
+    for x in range(0, len(list)):
+        str += list[x]
+        if x < len(list) - 1:
+            str += ", "
+    return str
+
 with open("Characters.csv", "a", newline = "") as csv_file:
     writer = csv.writer(csv_file)
 
@@ -71,10 +79,12 @@ with open("Characters.csv", "a", newline = "") as csv_file:
             for key in keyList:
                 if key in character and type(character[key]) is list:
                     valueList.append(
-                        list(
-                            filter(
-                                lambda x: not (re.compile(".*' on Amazon.*").match(x)),
-                                character[key]
+                        ListToString(
+                            list(
+                                filter(
+                                    lambda x: not (re.compile(".*' on Amazon.*").match(x)),
+                                    character[key]
+                                )
                             )
                         )
                     )
