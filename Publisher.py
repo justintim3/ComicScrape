@@ -5,8 +5,8 @@ import time
 import csv
 import ScrapeFunctions
 
-def ScrapePublisher(url, PublisherID):
-    page = urllib2.urlopen(url + PublisherID)
+def ScrapePublisher(url):
+    page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
 
     info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
@@ -19,7 +19,7 @@ def ScrapePublisher(url, PublisherID):
     )[1:] #list with delimited list using list comprehension
 
     publisher = {
-        "PublisherID": PublisherID,
+        "PublisherID": int(url[url.find("=") + 1:]),
         "Name": name_box.text.strip(),
     }
 
@@ -42,12 +42,12 @@ with open("Publishers.csv", "a", newline = "") as csv_file:
 
     for PublisherID in range(1, 21):
         try:
-            publisher = ScrapePublisher("http://www.comicbookdb.com/publisher.php?ID=", str(PublisherID))
+            publisher = ScrapePublisher("http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID))
 
             valueList = []
 
             for key in keyList:
-                if type(publisher[key]) is list:
+                if key in publisher and type(publisher[key]) is list:
                     valueList.append(
                         ScrapeFunctions.ListToString(
                             list(
@@ -59,11 +59,16 @@ with open("Publishers.csv", "a", newline = "") as csv_file:
                             )
                         )
                     )
-                else:
+                elif key in publisher:
                     valueList.append(publisher[key])
+                else:
+                    valueList.append(None)
 
-            print(valueList)
-            writer.writerow(valueList)
+            for x in range(0, len(valueList)):
+                if valueList[x] is not None:
+                    print(valueList)
+                    writer.writerow(valueList)
+                    break
 
             time.sleep(1)
         except Exception as e:

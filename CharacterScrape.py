@@ -5,8 +5,8 @@ import time
 import csv
 import ScrapeFunctions
 
-def ScrapeCharacter(url, CharacterID):
-    page = urllib2.urlopen(url + CharacterID)
+def ScrapeCharacter(url):
+    page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
 
     name_box = soup.find("span", attrs={"class": "page_headline"})
@@ -17,8 +17,9 @@ def ScrapeCharacter(url, CharacterID):
     )[1:] #list with delimited list using list comprehension
 
     character = {}
+
     try:
-        character = {"CharacterID": CharacterID,
+        character = {"CharacterID": int(url[url.find("=") + 1:]),
             "Name": name_box.text.strip()}
     except Exception as e:
         pass
@@ -43,7 +44,7 @@ with open("Characters.csv", "a", newline = "") as csv_file:
 
     for CharacterID in range(1, 21):
         try:
-            character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=", str(CharacterID))
+            character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=" + str(CharacterID))
 
             valueList = []
 

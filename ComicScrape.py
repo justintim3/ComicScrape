@@ -5,16 +5,23 @@ import time
 import csv
 import ScrapeFunctions
 
-def ScrapeComic(url, ComicID):
-    page = urllib2.urlopen(url + ComicID)
+def ScrapeComic(url):
+    page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
+
+    info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
 
     creators = soup.find_all("td", attrs={"valign": "top", "width": "366", "align": "left"})
     miscellaneous = soup.find_all("td", attrs={"colspan": "3", "valign": "top"})
 
-    publisher_box = soup.find("a", attrs={"class": "test"})
+    #publisher_box = soup.find("a", attrs={"class": "test"})
     series_box = soup.find("span", attrs={"class": "page_headline"})
     issue_box = soup.find("span", attrs={"class": "page_subheadline"})
+
+    info_box = ScrapeFunctions.HigherOrderListSplit(
+        ScrapeFunctions.Traverse(info),
+        lambda x: re.compile(".*:$").match(x)
+    )[1:]  # list with delimited list using list comprehension
     creators_box = ScrapeFunctions.HigherOrderListSplit(
         ScrapeFunctions.Traverse(creators),
         lambda x: re.compile(".*:$").match(x)
@@ -24,9 +31,21 @@ def ScrapeComic(url, ComicID):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
+    index = 0
+
+    for x in range(20, len(info_box[12])):
+        if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
+            index = x - 1
+            break
+
+    if info_box[12][index] == ")":
+        index = index - 1
+
+    publisher = info_box[12][index]
+
     comic = {
-        "ComicID": ComicID,
-        "Publisher": publisher_box.text.strip(),
+        "ComicID": int(url[url.find("=") + 1:]),
+        "Publisher": publisher,
         "Series": series_box.text.strip().split(" - ")[0],
         "Issue Number": series_box.text.strip().split(" - ")[1],
         "Issue Title": issue_box.text.strip().replace("\"", "")
@@ -65,12 +84,12 @@ with open("Comics.csv", "a", newline = "") as csv_file:
 
     for ComicID in range(1, 21):
         try:
-            comic = ScrapeComic("http://www.comicbookdb.com/issue.php?ID=", str(ComicID))
+            comic = ScrapeComic("http://www.comicbookdb.com/issue.php?ID=" + str(ComicID))
 
             valueList = []
 
             for key in keyList:
-                if type(comic[key]) is list:
+                if key in comic and type(comic[key]) is list:
                     valueList.append(
                         ScrapeFunctions.ListToString(
                             list(
@@ -81,13 +100,18 @@ with open("Comics.csv", "a", newline = "") as csv_file:
                             )
                         )
                     )
-                else:
+                elif key in comic:
                     valueList.append(comic[key])
+                else:
+                    valueList.append(None)
 
-            print(valueList)
-            writer.writerow(valueList)
+            for x in range(0, len(valueList)):
+                if valueList[x] is not None:
+                    print(valueList)
+                    writer.writerow(valueList)
+                    break
 
             time.sleep(1)
         except Exception as e:
-            #print(str(type(e)) + ": " + str(e))
+            print(str(type(e)) + ": " + str(e))
             pass
