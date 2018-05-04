@@ -4,6 +4,7 @@ import re
 import time
 import csv
 import ScrapeFunctions
+import functools
 
 def ScrapeCreator(url):
     page = urllib2.urlopen(url)
@@ -17,7 +18,8 @@ def ScrapeCreator(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
-    creator = {"CreatorID": int(url[url.find("=") + 1:]),
+    creator = {
+        "CreatorID": int(url[url.find("=") + 1:]),
         "Name": name_box.text.strip()}
 
     creator.update({x[0][0:-1]: x[1:] for x in info_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
@@ -32,7 +34,7 @@ with open("Creators.csv", "a", newline = "") as csv_file:
         "Name",
         "Bio",
         "Date of Birth",
-        "Birthplace"
+        "Birthplace"]
         #"Writer",
         #"Penciller",
         #"Inker",
@@ -40,11 +42,13 @@ with open("Creators.csv", "a", newline = "") as csv_file:
         #"Letterer",
         #"Editor",
         #"Cover Artist"
-    ]
+
     print(keyList)
     writer.writerow(keyList)
+    start = 1
+    end = 21
 
-    for CreatorID in range(1, 21):
+    for CreatorID in range(start, end):
         try:
             creator = ScrapeCreator("http://www.comicbookdb.com/creator.php?ID=" + str(CreatorID))
 
@@ -53,7 +57,7 @@ with open("Creators.csv", "a", newline = "") as csv_file:
             for key in keyList:
                 if key in creator and type(creator[key]) is list:
                     valueList.append(
-                        ScrapeFunctions.ListToString(
+                        " ".join(
                             list(
                                 filter(
                                     lambda x: not (re.compile(".*' on Amazon.*").match(x)),
@@ -67,7 +71,7 @@ with open("Creators.csv", "a", newline = "") as csv_file:
                 else:
                     valueList.append(None)
 
-            for x in range(0, len(valueList)):
+            for x in range(0, end - start):
                 if valueList[x] is not None:
                     print(valueList)
                     writer.writerow(valueList)
@@ -75,5 +79,5 @@ with open("Creators.csv", "a", newline = "") as csv_file:
 
             time.sleep(1)
         except Exception as e:
-            print(str(type(e)) + ": " + str(e))
+            #print(str(type(e)) + ": " + str(e))
             pass

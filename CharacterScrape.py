@@ -19,7 +19,8 @@ def ScrapeCharacter(url):
     character = {}
 
     try:
-        character = {"CharacterID": int(url[url.find("=") + 1:]),
+        character = {
+            "CharacterID": int(url[url.find("=") + 1:]),
             "Name": name_box.text.strip()}
     except Exception as e:
         pass
@@ -41,8 +42,10 @@ with open("Characters.csv", "a", newline = "") as csv_file:
     ]
     print(keyList)
     writer.writerow(keyList)
+    start = 1
+    end = 21
 
-    for CharacterID in range(1, 21):
+    for CharacterID in range(start, end):
         try:
             character = ScrapeCharacter("http://www.comicbookdb.com/character.php?ID=" + str(CharacterID))
 
@@ -51,7 +54,7 @@ with open("Characters.csv", "a", newline = "") as csv_file:
             for key in keyList:
                 if key in character and type(character[key]) is list:
                     valueList.append(
-                        ScrapeFunctions.ListToString(
+                        " ".join(
                             list(
                                 filter(
                                     lambda x: not (re.compile(".*' on Amazon.*").match(x)),
@@ -65,7 +68,7 @@ with open("Characters.csv", "a", newline = "") as csv_file:
                 else:
                     valueList.append(None)
 
-            for x in range(0, len(valueList)):
+            for x in range(0, end - start):
                 if valueList[x] is not None:
                     print(valueList)
                     writer.writerow(valueList)
@@ -73,5 +76,5 @@ with open("Characters.csv", "a", newline = "") as csv_file:
 
             time.sleep(1)
         except Exception as e:
-            print(str(type(e)) + ": " + str(e))
+            #print(str(type(e)) + ": " + str(e))
             pass

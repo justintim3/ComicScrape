@@ -39,8 +39,10 @@ with open("Publishers.csv", "a", newline = "") as csv_file:
     ]
     print(keyList)
     writer.writerow(keyList)
+    start = 1
+    end = 21
 
-    for PublisherID in range(1, 21):
+    for PublisherID in range(start, end):
         try:
             publisher = ScrapePublisher("http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID))
 
@@ -49,7 +51,7 @@ with open("Publishers.csv", "a", newline = "") as csv_file:
             for key in keyList:
                 if key in publisher and type(publisher[key]) is list:
                     valueList.append(
-                        ScrapeFunctions.ListToString(
+                        " ".join(
                             list(
                                 filter(
                                     lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
@@ -64,7 +66,7 @@ with open("Publishers.csv", "a", newline = "") as csv_file:
                 else:
                     valueList.append(None)
 
-            for x in range(0, len(valueList)):
+            for x in range(0, end - start):
                 if valueList[x] is not None:
                     print(valueList)
                     writer.writerow(valueList)

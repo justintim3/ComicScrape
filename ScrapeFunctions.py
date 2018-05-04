@@ -1,3 +1,5 @@
+import urllib.request as urllib2
+import bs4
 import csv
 import re
 import time
@@ -31,8 +33,26 @@ def ListToString(list):
     for x in range(0, len(list)):
         str += list[x]
         if x < len(list) - 1:
-            str += ", "
+            str += " "
     return str
+
+def NewLineReplace(list):
+    for x in range(0, len(list)):
+        str(list[x]).replace("\r", "").replace("\n", "")
+    return list
+
+def ListStringReplace(sub, repl, list):
+    for x in range(0, len(list)):
+        list[x] = str(list[x]).replace(sub, repl)
+    return list
+
+def EmptyPage(url):
+    page = urllib2.urlopen(url)
+    soup = bs4.BeautifulSoup(page, "html.parser")
+
+    error = soup.find("h2")
+    #print(error)
+    return error is not None
 
 def RunScrape(Excel, keyList, rangeTuple, Function, url):
     with open(Excel, "a", newline="") as csv_file:
@@ -48,10 +68,12 @@ def RunScrape(Excel, keyList, rangeTuple, Function, url):
         ]
         print(keyList)
         writer.writerow(keyList)
+        start = 1
+        end = 21
 
-        for CharacterID in range(1, 21):
+        for CharacterID in range(start, end):
             try:
-                character = Function("http://www.comicbookdb.com/character.php?ID=", str(CharacterID))
+                character = Function(url + str(CharacterID))
 
                 valueList = []
 
