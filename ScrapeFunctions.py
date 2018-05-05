@@ -4,7 +4,7 @@ import csv
 import re
 import time
 
-# traverses an HTML tag tree via depth first traversal
+# traverses an HTML tag tree via depth first traversal and returns a list of text
 def Traverse(Tags):
     result = []
     for tag in Tags:
@@ -12,6 +12,18 @@ def Traverse(Tags):
             result.append(tag.string.strip())
         elif hasattr(tag, "contents") and tag.contents:
             result.extend(Traverse(tag.contents))
+        else:
+            pass
+    return result
+
+def TraverseLinks(Tags):
+    result = []
+    for tag in Tags:
+        if not (tag.string and tag.string.strip()):
+            result.append(tag)
+        elif hasattr(tag, "contents") and tag.contents:
+            print("test")
+            result.extend(TraverseLinks(tag.contents))
         else:
             pass
     return result

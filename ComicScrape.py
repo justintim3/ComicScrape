@@ -28,6 +28,21 @@ def ScrapeComic(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
+    html = soup.find_all("a")
+    #html_box = ScrapeFunctions.TraverseLinks(html)
+
+    print(html)
+
+    pub = []
+    "" in html
+    print(len(html))
+    for x in range(62, len(html)):
+        #if "publisher" in str(html[x]):
+        #    pub.append(html[x])
+        #    print(x + html[x])
+        print(html[x])
+    #print(pub)
+
     index = 0
     for x in range(20, len(info_box[12])):
         if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
@@ -80,7 +95,7 @@ with open("Comics.csv", "a", newline = "") as csv_file:
     print(keyList)
     writer.writerow(keyList)
     start = 1
-    end = 101
+    end = 2
 
     for ComicID in range(start, end):
         try:
