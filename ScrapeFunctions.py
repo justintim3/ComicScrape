@@ -2,7 +2,6 @@ import urllib.request as urllib2
 import bs4
 import csv
 import re
-import time
 
 # traverses an HTML tag tree via depth first traversal and returns a list of text
 def Traverse(Tags):
@@ -82,6 +81,15 @@ def ListStringReplace(sub, repl, list):
         list[x] = str(list[x]).replace(sub, repl)
     return list
 
+def ReadFromCSV(filePath, included_cols):
+    with open(filePath) as csvfile:
+        reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+        columns = []
+        for row in reader:
+            print(row)
+            columns = list(row[i] for i in included_cols)
+            print(columns)
+
 def IsEmptyPage(url):
     page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
@@ -151,6 +159,14 @@ def Print3JunctionTable(writer, ID, TypeIDList, TypeIDCountList, IDList):
             print(list)
             writer.writerow(list)
             list.clear()
+    except Exception as e:
+        print(str(type(e)) + ": " + str(e))
+        pass
+
+def PrintColumn(writer, IDList):
+    try:
+        for x in IDList:
+            writer.writerow([x])
     except Exception as e:
         print(str(type(e)) + ": " + str(e))
         pass

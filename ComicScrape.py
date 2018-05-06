@@ -53,13 +53,7 @@ def ScrapeComic(url):
         title = ""
 
     creatorTypeIDList = [
-        "0",
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6"
+        "0", "1", "2", "3", "4", "5", "6"
     ]
 
     comic = {
@@ -101,9 +95,9 @@ def ScrapeComic(url):
     return comic
 
 start = 1
-end = 101
+end = 4
 
-keyList = [
+comicColumnList = [
     "ComicID",
     "PublisherID",
     "SeriesID",
@@ -113,64 +107,77 @@ keyList = [
     "Cover Date",
     "Cover Price",
     "Format",
-    "Synopsis",
-    "StoryArcIDList",
-    "CreatorIDList",
-    "CharacterIDList"
+    "Synopsis"
 ]
-
-with open("Comics.csv", "a", newline="") as csv_file:
-    writer = csv.writer(csv_file)
-    print(keyList)
-    writer.writerow(keyList)
-    for ComicID in range(start, end):
-        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
-        error = ScrapeFunctions.IsEmptyPage(url)
-        #if page exists (not 404 page not found error)
-        if not error:
-            comic = ScrapeComic(url)
-            ScrapeFunctions.PrintTable(writer, keyList, comic, ", ", ".*[Aa]dd/remove.*")
-        time.sleep(1)
-
-comicCharIDList = [
+comicCharIDColumnList = [
     "ComicID",
     "CharacterID"
 ]
-with open("ComicCharacters.csv", "a", newline="") as csv_file:
-    writer = csv.writer(csv_file)
-    print(comicCharIDList)
-    writer.writerow(comicCharIDList)
-    for ComicID in range(start, end):
-        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
-        error = ScrapeFunctions.IsEmptyPage(url)
-        #if page exists (not 404 page not found error)
-        if error is False:
-            comic = ScrapeComic(url)
-            ScrapeFunctions.PrintJunctionTable(writer, ComicID, comic["CharacterIDList"])
-        time.sleep(1)
-
-comicCreatorIDList = [
+comicCreatorIDColumnList = [
     "ComicID",
     "CreatorTypeID",
     "CreatorID"
 ]
 
-with open("ComicCreators.csv", "a", newline="") as csv_file:
-    writer = csv.writer(csv_file)
-    print(comicCreatorIDList)
-    writer.writerow(comicCreatorIDList)
-    for ComicID in range(start, end):
-        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
-        error = ScrapeFunctions.IsEmptyPage(url)
-        # if page exists (not 404 page not found error)
-        if error is False:
-            comic = ScrapeComic(url)
-            ScrapeFunctions.Print3JunctionTable(
-                writer,
-                ComicID,
-                comic["CreatorTypeIDList"],
-                comic["CreatorTypeIDCountList"],
-                comic["CreatorIDList"])
-        time.sleep(1)
+storyArc = set()
+creatorID = set()
+characterID = set()
 
+comicsFile = open("Comics.csv", "w", newline="")
+comicCreatorsFile = open("ComicCreators.csv", "w", newline="")
+comicCharactersFile = open("ComicCharacters.csv", "w", newline="")
+storyArcIDs = open("StoryArcIDs.csv", "w", newline="")
+creatorIDs = open("CreatorIDs.csv", "w", newline="")
+characterIDs = open("CharacterIDs.csv", "w", newline="")
 
+comicsWriter = csv.writer(comicsFile)
+comicCreatorsWriter = csv.writer(comicCreatorsFile)
+comicCharactersWriter = csv.writer(comicCharactersFile)
+storyArcIDsWriter = csv.writer(storyArcIDs)
+creatorIDsWriter = csv.writer(creatorIDs)
+characterIDsWriter = csv.writer(characterIDs)
+
+#print(keyList)
+comicsWriter.writerow(comicColumnList)
+comicCreatorsWriter.writerow(comicCreatorIDColumnList)
+comicCharactersWriter.writerow(comicCharIDColumnList)
+storyArcIDsWriter.writerow(["StoryArcID"])
+creatorIDsWriter.writerow(["CreatorID"])
+characterIDsWriter.writerow(["CharacterID"])
+
+for ComicID in range(start, end):
+    url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+    error = ScrapeFunctions.IsEmptyPage(url)
+    #if page exists (not 404 page not found error)
+    if not error:
+        comic = ScrapeComic(url)
+        ScrapeFunctions.PrintTable(comicsWriter, comicColumnList, comic, ", ", ".*[Aa]dd/remove.*")
+        ScrapeFunctions.PrintJunctionTable(comicCharactersWriter, ComicID, comic["CharacterIDList"])
+        ScrapeFunctions.Print3JunctionTable(
+            comicCreatorsWriter,
+            ComicID,
+            comic["CreatorTypeIDList"],
+            comic["CreatorTypeIDCountList"],
+            comic["CreatorIDList"])
+        for arc in comic["StoryArcIDList"]:
+            storyArc.add(arc)
+        for creator in comic["CreatorIDList"]:
+            creatorID.add(creator)
+        for character in comic["CharacterIDList"]:
+            characterID.add(character)
+    time.sleep(0.5)
+
+ScrapeFunctions.PrintColumn(storyArcIDsWriter, list(storyArc))
+ScrapeFunctions.PrintColumn(creatorIDsWriter, list(creatorID))
+ScrapeFunctions.PrintColumn(characterIDsWriter, list(characterID))
+print(storyArc)
+print(creatorID)
+print(characterID)
+
+filePath = "CharacterIDs.csv"
+columns = [0]
+ScrapeFunctions.ReadFromCSV(filePath, columns)
+
+comicsFile.close()
+comicCreatorsFile.close()
+comicCharactersFile.close()
