@@ -28,92 +28,149 @@ def ScrapeComic(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
-    index = 0
-    for x in range(20, len(info_box[12])):
-        if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
-            index = x - 1
-            break
-    if info_box[12][index] == ")":
-        index = index - 1
-    publisher = info_box[12][index]
+    html = soup.find_all("a")
+    end = ScrapeFunctions.FindIDIndex("review_add.php?", html)
+    ImageURL = ScrapeFunctions.FindID("graphics/comic_graphics/", html)
+    SeriesID = ScrapeFunctions.FindID("title.php", html)
+    PublisherID = ScrapeFunctions.FindID("publisher", html)
+    CharacterIDList = ScrapeFunctions.FindAllID("\"character.php", html, end)
+    CreatorIDList = ScrapeFunctions.FindAllID("\"creator.php", html, end)
+    StoryArcIDList = ScrapeFunctions.FindAllID("\"storyarc.php", html, end)
 
+    #publisher
+    #index = 0
+    #for x in range(20, len(info_box[12])):
+    #    if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
+    #        index = x - 1
+    #        break
+    #if info_box[12][index] == ")":
+    #    index = index - 1
+    #publisher = info_box[12][index]
+
+    #remove
     title = issue_box.text.strip().replace("\"", "")
     if title == "Rating":
         title = ""
 
+    creatorTypeIDList = [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6"
+    ]
+
     comic = {
         "ComicID": int(url[url.find("=") + 1:]),
-        "Publisher": publisher,
         "Series": series_box.text.strip().split(" - ")[0],
+        "SeriesID": SeriesID,
+        #"Publisher": publisher,
+        "PublisherID": PublisherID,
         "Issue Number": series_box.text.strip().split(" - #")[1],
-        "Issue Title": title
+        "Issue Title": title,
+        "ImageURL": ImageURL[ImageURL.find("_graphics") + 10:ImageURL.find("target") - 2],
+        "StoryArcIDList": StoryArcIDList,
+        "CreatorIDList": CreatorIDList,
+        "CharacterIDList": CharacterIDList,
+        "CreatorTypeIDList": creatorTypeIDList
     }
 
     comic.update({x[0][0:-1]: x[1:] for x in creators_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
     comic.update({x[0][0:-1]: x[1:] for x in miscellaneous_box})   #Cover Date, Cover Price
 
-    return comic
-
-with open("Comics.csv", "a", newline = "") as csv_file:
-    writer = csv.writer(csv_file)
-
-    keyList = [
-        "ComicID",
-        "Publisher",
-        "Series",
-        "Issue Number",
-        "Issue Title",
+    creatorTypeList = [
         "Writer(s)",
         "Penciller(s)",
         "Inker(s)",
         "Colorist(s)",
         "Letterer(s)",
         "Editor(s)",
-        "Cover Artist(s)",
-        "Cover Date",
-        "Cover Price",
-        "Format",
-        "Synopsis",
-        "Story Arc(s)",
-        "Characters"
+        "Cover Artist(s)"
     ]
+    creatorTypeIDCountList = []
+    for x in range(0, 7):
+        try:
+            creatorTypeIDCountList.append(len(comic[creatorTypeList[x]]))
+        except Exception as e:
+            creatorTypeIDCountList.append(0)
+
+    comic.update({"CreatorTypeIDCountList": creatorTypeIDCountList})
+
+    return comic
+
+start = 1
+end = 101
+
+keyList = [
+    "ComicID",
+    "PublisherID",
+    "SeriesID",
+    "Issue Number",
+    "Issue Title",
+    "ImageURL",
+    "Cover Date",
+    "Cover Price",
+    "Format",
+    "Synopsis",
+    "StoryArcIDList",
+    "CreatorIDList",
+    "CharacterIDList"
+]
+
+with open("Comics.csv", "a", newline="") as csv_file:
+    writer = csv.writer(csv_file)
     print(keyList)
     writer.writerow(keyList)
-    start = 1
-    end = 101
-
     for ComicID in range(start, end):
-        try:
-            url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+        error = ScrapeFunctions.IsEmptyPage(url)
+        #if page exists (not 404 page not found error)
+        if not error:
             comic = ScrapeComic(url)
-            error = ScrapeFunctions.EmptyPage(url)
+            ScrapeFunctions.PrintTable(writer, keyList, comic, ", ", ".*[Aa]dd/remove.*")
+        time.sleep(1)
 
-            if error is False:
-                valueList = []
+comicCharIDList = [
+    "ComicID",
+    "CharacterID"
+]
+with open("ComicCharacters.csv", "a", newline="") as csv_file:
+    writer = csv.writer(csv_file)
+    print(comicCharIDList)
+    writer.writerow(comicCharIDList)
+    for ComicID in range(start, end):
+        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+        error = ScrapeFunctions.IsEmptyPage(url)
+        #if page exists (not 404 page not found error)
+        if error is False:
+            comic = ScrapeComic(url)
+            ScrapeFunctions.PrintJunctionTable(writer, ComicID, comic["CharacterIDList"])
+        time.sleep(1)
 
-                for key in keyList:
-                    if key in comic and type(comic[key]) is list:
-                        valueList.append(
-                            ", ".join(
-                                ScrapeFunctions.ListStringReplace("''", "\\'",
-                                    list(
-                                        filter(
-                                            lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x)),
-                                            comic[key]
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    elif key in comic:
-                        valueList.append(comic[key])
-                    else:
-                        valueList.append(None)
+comicCreatorIDList = [
+    "ComicID",
+    "CreatorTypeID",
+    "CreatorID"
+]
 
-                print(valueList)
-                writer.writerow(valueList)
+with open("ComicCreators.csv", "a", newline="") as csv_file:
+    writer = csv.writer(csv_file)
+    print(comicCreatorIDList)
+    writer.writerow(comicCreatorIDList)
+    for ComicID in range(start, end):
+        url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+        error = ScrapeFunctions.IsEmptyPage(url)
+        # if page exists (not 404 page not found error)
+        if error is False:
+            comic = ScrapeComic(url)
+            ScrapeFunctions.Print3JunctionTable(
+                writer,
+                ComicID,
+                comic["CreatorTypeIDList"],
+                comic["CreatorTypeIDCountList"],
+                comic["CreatorIDList"])
+        time.sleep(1)
 
-            time.sleep(1)
-        except Exception as e:
-            #print(str(type(e)) + ": " + str(e))
-            pass
+
