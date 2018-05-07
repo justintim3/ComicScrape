@@ -20,59 +20,41 @@ def ScrapePublisher(url):
 
     publisher = {
         "PublisherID": int(url[url.find("=") + 1:]),
-        "Name": name_box.text.strip(),
+        "Name": name_box.text.strip()
     }
 
     publisher.update({x[0][0:-1]: x[1:] for x in info_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
 
     return publisher
 
-with open("Publishers.csv", "a", newline = "") as csv_file:
-    writer = csv.writer(csv_file)
 
-    keyList = [
+publisherList = ScrapeFunctions.ReadCSV("PublisherIDs.csv")
+print(publisherList)
+
+publishersFile = open("Publishers.csv", "w", newline="")
+publishersWriter = csv.writer(publishersFile)
+publishersColumnList = [
         "PublisherID",
         "Name",
         "Website",
         "Notes",
         "Titles"
-    ]
-    print(keyList)
-    writer.writerow(keyList)
-    start = 1
-    end = 21
+]
+publishersWriter.writerow(publishersColumnList)
 
-    for PublisherID in range(start, end):
-        try:
-            publisher = ScrapePublisher("http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID))
 
-            valueList = []
+for PublisherID in publisherList:
+    url = "http://http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID)
+    error = ScrapeFunctions.IsEmptyPage(url)
+    # if page exists (not 404 page not found error)
+    if not error:
+        publisher = ScrapePublisher(url)
+        ScrapeFunctions.PrintTable(publishersWriter, publishersColumnList, publisher
+            , " ", ".*Click here for a history of this publisher's logos.*")
+    time.sleep(0.5)
 
-            for key in keyList:
-                if key in publisher and type(publisher[key]) is list:
-                    valueList.append(
-                        " ".join(
-                            list(
-                                filter(
-                                    lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
-                                                   re.compile(".*Click here for a history of this publisher's logos.*").match(x)),
-                                    publisher[key]
-                                )
-                            )
-                        )
-                    )
-                elif key in publisher:
-                    valueList.append(publisher[key])
-                else:
-                    valueList.append(None)
+publishersFile.close()
 
-            for x in range(0, end - start):
-                if valueList[x] is not None:
-                    print(valueList)
-                    writer.writerow(valueList)
-                    break
-
-            time.sleep(1)
-        except Exception as e:
-            #print(str(type(e)) + ": " + str(e))
-            pass
+#lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
+#   re.compile(".*Click here for a history of this publisher's logos.*").match(x)),
+#   publisher[key]

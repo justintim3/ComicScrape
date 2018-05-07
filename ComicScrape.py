@@ -96,7 +96,7 @@ def ScrapeComic(url):
 
 
 start = 1
-end = 11
+end = 50
 
 publisherID = set()
 seriesID = set()
