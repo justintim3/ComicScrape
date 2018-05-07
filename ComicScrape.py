@@ -28,14 +28,15 @@ def ScrapeComic(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
-    html = soup.find_all("a")
-    end = ScrapeFunctions.FindIDIndex("review_add.php?", html)
-    ImageURL = ScrapeFunctions.FindID("graphics/comic_graphics/", html)
-    SeriesID = ScrapeFunctions.FindID("title.php", html)
-    PublisherID = ScrapeFunctions.FindID("publisher", html)
-    CharacterIDList = ScrapeFunctions.FindAllID("\"character.php", html, end)
-    CreatorIDList = ScrapeFunctions.FindAllID("\"creator.php", html, end)
-    StoryArcIDList = ScrapeFunctions.FindAllID("\"storyarc.php", html, end)
+    link = soup.find_all("a")
+    img = soup.find_all("img")
+    end = ScrapeFunctions.FindURLIndex("review_add.php?", link)
+    ImageURL = ScrapeFunctions.FindURL("graphics/comic_graphics/", img, 0, "comic_graphics/", "\" width=")
+    SeriesID = ScrapeFunctions.FindURL("title.php", link, 63, "ID=", "\">")
+    PublisherID = ScrapeFunctions.FindURL("publisher", link, 63, "ID=", "\">")
+    CharacterIDList = ScrapeFunctions.FindAllURLs("\"character.php", link, 63, end, "ID=", "\">")
+    CreatorIDList = ScrapeFunctions.FindAllURLs("\"creator.php", link, 63, end, "ID=", "\">")
+    StoryArcIDList = ScrapeFunctions.FindAllURLs("\"storyarc.php", link, 63, end, "ID=", "\">")
 
     #publisher
     #index = 0
@@ -64,7 +65,7 @@ def ScrapeComic(url):
         "PublisherID": PublisherID,
         "Issue Number": series_box.text.strip().split(" - #")[1],
         "Issue Title": title,
-        "ImageURL": ImageURL[ImageURL.find("_graphics") + 10:ImageURL.find("target") - 2],
+        "ImageURL": ImageURL,
         "StoryArcIDList": StoryArcIDList,
         "CreatorIDList": CreatorIDList,
         "CharacterIDList": CharacterIDList,
@@ -91,11 +92,35 @@ def ScrapeComic(url):
             creatorTypeIDCountList.append(0)
 
     comic.update({"CreatorTypeIDCountList": creatorTypeIDCountList})
-
     return comic
 
+
 start = 1
-end = 4
+end = 11
+
+publisherID = set()
+seriesID = set()
+storyArcID = set()
+creatorID = set()
+characterID = set()
+
+comicsFile = open("Comics.csv", "w", newline="")
+comicCreatorsFile = open("ComicCreators.csv", "w", newline="")
+comicCharactersFile = open("ComicCharacters.csv", "w", newline="")
+publisherIDs = open("PublisherIDs.csv", "w", newline="")
+seriesIDs = open("SeriesIDs.csv", "w", newline="")
+storyArcIDs = open("StoryArcIDs.csv", "w", newline="")
+creatorIDs = open("CreatorIDs.csv", "w", newline="")
+characterIDs = open("CharacterIDs.csv", "w", newline="")
+
+comicsWriter = csv.writer(comicsFile)
+comicCreatorsWriter = csv.writer(comicCreatorsFile)
+comicCharactersWriter = csv.writer(comicCharactersFile)
+publisherIDsWriter = csv.writer(publisherIDs)
+seriesIDsWriter = csv.writer(seriesIDs)
+storyArcIDsWriter = csv.writer(storyArcIDs)
+creatorIDsWriter = csv.writer(creatorIDs)
+characterIDsWriter = csv.writer(characterIDs)
 
 comicColumnList = [
     "ComicID",
@@ -119,28 +144,11 @@ comicCreatorIDColumnList = [
     "CreatorID"
 ]
 
-storyArc = set()
-creatorID = set()
-characterID = set()
-
-comicsFile = open("Comics.csv", "w", newline="")
-comicCreatorsFile = open("ComicCreators.csv", "w", newline="")
-comicCharactersFile = open("ComicCharacters.csv", "w", newline="")
-storyArcIDs = open("StoryArcIDs.csv", "w", newline="")
-creatorIDs = open("CreatorIDs.csv", "w", newline="")
-characterIDs = open("CharacterIDs.csv", "w", newline="")
-
-comicsWriter = csv.writer(comicsFile)
-comicCreatorsWriter = csv.writer(comicCreatorsFile)
-comicCharactersWriter = csv.writer(comicCharactersFile)
-storyArcIDsWriter = csv.writer(storyArcIDs)
-creatorIDsWriter = csv.writer(creatorIDs)
-characterIDsWriter = csv.writer(characterIDs)
-
-#print(keyList)
 comicsWriter.writerow(comicColumnList)
 comicCreatorsWriter.writerow(comicCreatorIDColumnList)
 comicCharactersWriter.writerow(comicCharIDColumnList)
+publisherIDsWriter.writerow(["PublisherID"])
+seriesIDsWriter.writerow(["SeriesID"])
 storyArcIDsWriter.writerow(["StoryArcID"])
 creatorIDsWriter.writerow(["CreatorID"])
 characterIDsWriter.writerow(["CharacterID"])
@@ -159,25 +167,33 @@ for ComicID in range(start, end):
             comic["CreatorTypeIDList"],
             comic["CreatorTypeIDCountList"],
             comic["CreatorIDList"])
+        for publisher in comic["PublisherID"]:
+            publisherID.add(publisher)
+        for series in comic["SeriesID"]:
+            seriesID.add(series)
         for arc in comic["StoryArcIDList"]:
-            storyArc.add(arc)
+            storyArcID.add(arc)
         for creator in comic["CreatorIDList"]:
             creatorID.add(creator)
         for character in comic["CharacterIDList"]:
             characterID.add(character)
     time.sleep(0.5)
 
-ScrapeFunctions.PrintColumn(storyArcIDsWriter, list(storyArc))
-ScrapeFunctions.PrintColumn(creatorIDsWriter, list(creatorID))
-ScrapeFunctions.PrintColumn(characterIDsWriter, list(characterID))
-print(storyArc)
-print(creatorID)
+print(seriesID)
+print(storyArcID)
 print(characterID)
 
-filePath = "CharacterIDs.csv"
-columns = [0]
-ScrapeFunctions.ReadFromCSV(filePath, columns)
+ScrapeFunctions.PrintColumn(publisherIDsWriter, list(publisherID))
+ScrapeFunctions.PrintColumn(seriesIDsWriter, list(seriesID))
+ScrapeFunctions.PrintColumn(storyArcIDsWriter, list(storyArcID))
+ScrapeFunctions.PrintColumn(creatorIDsWriter, list(creatorID))
+ScrapeFunctions.PrintColumn(characterIDsWriter, list(characterID))
 
 comicsFile.close()
 comicCreatorsFile.close()
 comicCharactersFile.close()
+publisherIDs.close()
+seriesIDs.close()
+storyArcIDs.close()
+creatorIDs.close()
+characterIDs.close()

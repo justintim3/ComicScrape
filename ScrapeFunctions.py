@@ -15,6 +15,7 @@ def Traverse(Tags):
             pass
     return result
 
+
 def TraverseLinks(Tags):
     result = []
     for tag in Tags:
@@ -26,6 +27,7 @@ def TraverseLinks(Tags):
         else:
             pass
     return result
+
 
 # splits a list into a list of sublists based on a lambda that returns a boolean
 def HigherOrderListSplit(sequence, l):
@@ -39,29 +41,33 @@ def HigherOrderListSplit(sequence, l):
     result.append(g)
     return result
 
-#Search until ID is found
-def FindID(string, aList):
-    for x in range(63, len(aList)):
+
+#Search until link is found
+def FindURL(string, aList, begTag, begString, endString):
+    for x in range(begTag, len(aList)):
         if string in str(aList[x]):
-            begin = str(aList[x]).find("ID=") + 3
-            end = str(aList[x]).find("\">")
+            begin = str(aList[x]).find(begString) + len(begString)
+            end = str(aList[x]).find(endString)
             return str(aList[x])[begin:end]
 
-#Search until ID is found and return index
-def FindIDIndex(string, aList):
+
+#Search until link is found and return index
+def FindURLIndex(string, aList):
     for x in range(63, len(aList)):
         if string in str(aList[x]):
             return x
 
-#Search until all IDs are found
-def FindAllID(string, aList, end):
+
+#Search until all links are found
+def FindAllURLs(string, aList, begTag, endTag, begString, endString):
     idList = []
-    for x in range(63, end):
+    for x in range(begTag, endTag):
         if string in str(aList[x]):
-            begin = str(aList[x]).find("ID=") + 3
-            end = str(aList[x]).find("\">")
+            begin = str(aList[x]).find(begString) + len(begString)
+            end = str(aList[x]).find(endString)
             idList.append(str(aList[x])[begin:end])
     return idList
+
 
 def ListToString(list):
     str = ""
@@ -71,24 +77,50 @@ def ListToString(list):
             str += " "
     return str
 
+
 def NewLineReplace(list):
     for x in range(0, len(list)):
         str(list[x]).replace("\r", "").replace("\n", "")
     return list
+
 
 def ListStringReplace(sub, repl, list):
     for x in range(0, len(list)):
         list[x] = str(list[x]).replace(sub, repl)
     return list
 
-def ReadFromCSV(filePath, included_cols):
-    with open(filePath) as csvfile:
-        reader = csv.reader(csvfile, delimiter=',', quotechar='|')
-        columns = []
-        for row in reader:
-            print(row)
-            columns = list(row[i] for i in included_cols)
-            print(columns)
+
+def ReadCSV(filePath):
+    try:
+        with open(filePath, "r") as csvfile:
+            column = []
+            reader = csv.reader(csvfile)
+            list_data = list(reader)
+            for x in range(1, len(list_data)):
+                column.append(list_data[x][0])
+            return column
+    except Exception as e:
+        print(str(type(e)) + ": " + str(e))
+        pass
+
+
+def ReadCSVColumns(filePath, desiredCols):
+    try:
+        with open(filePath, "r") as csvfile:
+            columnList = []
+            column = []
+            reader = csv.reader(csvfile)
+            list_data = list(reader)
+            for y in desiredCols:
+                for x in range(1, len(list_data)):
+                    column.append(list_data[x][y])
+                columnList.append(column)
+                column = []
+            return columnList
+    except Exception as e:
+        print(str(type(e)) + ": " + str(e))
+        pass
+
 
 def IsEmptyPage(url):
     page = urllib2.urlopen(url)
@@ -101,32 +133,34 @@ def IsEmptyPage(url):
 
     return error is not None or error2
 
+
 def PrintTable(writer, keyList, dictionary, joinStr, lamda):
-        try:
-            valueList = []
-            for key in keyList:
-                if key in dictionary and type(dictionary[key]) is list:
-                    valueList.append(
-                        joinStr.join(
-                            ListStringReplace("''", "\\'",
-                                list(
-                                    filter(
-                                        lambda x: not (re.compile(lamda).match(x)),
-                                        dictionary[key]
-                                    )
+    try:
+        valueList = []
+        for key in keyList:
+            if key in dictionary and type(dictionary[key]) is list:
+                valueList.append(
+                    joinStr.join(
+                        ListStringReplace("''", "\\'",
+                            list(
+                                filter(
+                                    lambda x: not (re.compile(lamda).match(x)),
+                                    dictionary[key]
                                 )
                             )
                         )
                     )
-                elif key in dictionary:
-                    valueList.append(dictionary[key])
-                else:
-                    valueList.append(None)
-            print(valueList)
-            writer.writerow(valueList)
-        except Exception as e:
-            print(str(type(e)) + ": " + str(e))
-            pass
+                )
+            elif key in dictionary:
+                valueList.append(dictionary[key])
+            else:
+                valueList.append(None)
+        print(valueList)
+        writer.writerow(valueList)
+    except Exception as e:
+        print(str(type(e)) + ": " + str(e))
+        pass
+
 
 def PrintJunctionTable(writer, ID, IDList):
     try:
@@ -140,6 +174,7 @@ def PrintJunctionTable(writer, ID, IDList):
     except Exception as e:
         print(str(type(e)) + ": " + str(e))
         pass
+
 
 def Print3JunctionTable(writer, ID, TypeIDList, TypeIDCountList, IDList):
     try:
@@ -162,6 +197,7 @@ def Print3JunctionTable(writer, ID, TypeIDList, TypeIDCountList, IDList):
     except Exception as e:
         print(str(type(e)) + ": " + str(e))
         pass
+
 
 def PrintColumn(writer, IDList):
     try:
