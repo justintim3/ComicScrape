@@ -28,107 +28,172 @@ def ScrapeComic(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
-    html = soup.find_all("a")
-    #html_box = ScrapeFunctions.TraverseLinks(html)
+    link = soup.find_all("a")
+    img = soup.find_all("img")
+    end = ScrapeFunctions.FindURLIndex("review_add.php?", link)
+    ImageURL = ScrapeFunctions.FindURL("graphics/comic_graphics/", img, 0, "comic_graphics/", "\" width=")
+    SeriesID = ScrapeFunctions.FindURL("title.php", link, 63, "ID=", "\">")
+    PublisherID = ScrapeFunctions.FindURL("publisher", link, 63, "ID=", "\">")
+    CharacterIDList = ScrapeFunctions.FindAllURLs("\"character.php", link, 63, end, "ID=", "\">")
+    CreatorIDList = ScrapeFunctions.FindAllURLs("\"creator.php", link, 63, end, "ID=", "\">")
+    StoryArcIDList = ScrapeFunctions.FindAllURLs("\"storyarc.php", link, 63, end, "ID=", "\">")
 
-    print(html)
+    #publisher
+    #index = 0
+    #for x in range(20, len(info_box[12])):
+    #    if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
+    #        index = x - 1
+    #        break
+    #if info_box[12][index] == ")":
+    #    index = index - 1
+    #publisher = info_box[12][index]
 
-    pub = []
-    "" in html
-    print(len(html))
-    for x in range(62, len(html)):
-        #if "publisher" in str(html[x]):
-        #    pub.append(html[x])
-        #    print(x + html[x])
-        print(html[x])
-    #print(pub)
-
-    index = 0
-    for x in range(20, len(info_box[12])):
-        if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
-            index = x - 1
-            break
-    if info_box[12][index] == ")":
-        index = index - 1
-    publisher = info_box[12][index]
-
+    #remove
     title = issue_box.text.strip().replace("\"", "")
     if title == "Rating":
         title = ""
 
+    creatorTypeIDList = [
+        "0", "1", "2", "3", "4", "5", "6"
+    ]
+
     comic = {
         "ComicID": int(url[url.find("=") + 1:]),
-        "Publisher": publisher,
         "Series": series_box.text.strip().split(" - ")[0],
+        "SeriesID": SeriesID,
+        #"Publisher": publisher,
+        "PublisherID": PublisherID,
         "Issue Number": series_box.text.strip().split(" - #")[1],
-        "Issue Title": title
+        "Issue Title": title,
+        "ImageURL": ImageURL,
+        "StoryArcIDList": StoryArcIDList,
+        "CreatorIDList": CreatorIDList,
+        "CharacterIDList": CharacterIDList,
+        "CreatorTypeIDList": creatorTypeIDList
     }
 
     comic.update({x[0][0:-1]: x[1:] for x in creators_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
     comic.update({x[0][0:-1]: x[1:] for x in miscellaneous_box})   #Cover Date, Cover Price
 
-    return comic
-
-with open("Comics.csv", "a", newline = "") as csv_file:
-    writer = csv.writer(csv_file)
-
-    keyList = [
-        "ComicID",
-        "Publisher",
-        "Series",
-        "Issue Number",
-        "Issue Title",
+    creatorTypeList = [
         "Writer(s)",
         "Penciller(s)",
         "Inker(s)",
         "Colorist(s)",
         "Letterer(s)",
         "Editor(s)",
-        "Cover Artist(s)",
-        "Cover Date",
-        "Cover Price",
-        "Format",
-        "Synopsis",
-        "Story Arc(s)",
-        "Characters"
+        "Cover Artist(s)"
     ]
-    print(keyList)
-    writer.writerow(keyList)
-    start = 1
-    end = 2
-
-    for ComicID in range(start, end):
+    creatorTypeIDCountList = []
+    for x in range(0, 7):
         try:
-            url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
-            comic = ScrapeComic(url)
-            error = ScrapeFunctions.EmptyPage(url)
-
-            if error is False:
-                valueList = []
-
-                for key in keyList:
-                    if key in comic and type(comic[key]) is list:
-                        valueList.append(
-                            ", ".join(
-                                ScrapeFunctions.ListStringReplace("''", "\\'",
-                                    list(
-                                        filter(
-                                            lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x)),
-                                            comic[key]
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    elif key in comic:
-                        valueList.append(comic[key])
-                    else:
-                        valueList.append(None)
-
-                print(valueList)
-                writer.writerow(valueList)
-
-            time.sleep(1)
+            creatorTypeIDCountList.append(len(comic[creatorTypeList[x]]))
         except Exception as e:
-            #print(str(type(e)) + ": " + str(e))
-            pass
+            creatorTypeIDCountList.append(0)
+
+    comic.update({"CreatorTypeIDCountList": creatorTypeIDCountList})
+    return comic
+
+
+start = 1
+end = 11
+
+publisherID = set()
+seriesID = set()
+storyArcID = set()
+creatorID = set()
+characterID = set()
+
+comicsFile = open("Comics.csv", "w", newline="")
+comicCreatorsFile = open("ComicCreators.csv", "w", newline="")
+comicCharactersFile = open("ComicCharacters.csv", "w", newline="")
+publisherIDs = open("PublisherIDs.csv", "w", newline="")
+seriesIDs = open("SeriesIDs.csv", "w", newline="")
+storyArcIDs = open("StoryArcIDs.csv", "w", newline="")
+creatorIDs = open("CreatorIDs.csv", "w", newline="")
+characterIDs = open("CharacterIDs.csv", "w", newline="")
+
+comicsWriter = csv.writer(comicsFile)
+comicCreatorsWriter = csv.writer(comicCreatorsFile)
+comicCharactersWriter = csv.writer(comicCharactersFile)
+publisherIDsWriter = csv.writer(publisherIDs)
+seriesIDsWriter = csv.writer(seriesIDs)
+storyArcIDsWriter = csv.writer(storyArcIDs)
+creatorIDsWriter = csv.writer(creatorIDs)
+characterIDsWriter = csv.writer(characterIDs)
+
+comicColumnList = [
+    "ComicID",
+    "PublisherID",
+    "SeriesID",
+    "Issue Number",
+    "Issue Title",
+    "ImageURL",
+    "Cover Date",
+    "Cover Price",
+    "Format",
+    "Synopsis"
+]
+comicCharIDColumnList = [
+    "ComicID",
+    "CharacterID"
+]
+comicCreatorIDColumnList = [
+    "ComicID",
+    "CreatorTypeID",
+    "CreatorID"
+]
+
+comicsWriter.writerow(comicColumnList)
+comicCreatorsWriter.writerow(comicCreatorIDColumnList)
+comicCharactersWriter.writerow(comicCharIDColumnList)
+publisherIDsWriter.writerow(["PublisherID"])
+seriesIDsWriter.writerow(["SeriesID"])
+storyArcIDsWriter.writerow(["StoryArcID"])
+creatorIDsWriter.writerow(["CreatorID"])
+characterIDsWriter.writerow(["CharacterID"])
+
+for ComicID in range(start, end):
+    url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
+    error = ScrapeFunctions.IsEmptyPage(url)
+    #if page exists (not 404 page not found error)
+    if not error:
+        comic = ScrapeComic(url)
+        ScrapeFunctions.PrintTable(comicsWriter, comicColumnList, comic, ", ", ".*[Aa]dd/remove.*")
+        ScrapeFunctions.PrintJunctionTable(comicCharactersWriter, ComicID, comic["CharacterIDList"])
+        ScrapeFunctions.Print3JunctionTable(
+            comicCreatorsWriter,
+            ComicID,
+            comic["CreatorTypeIDList"],
+            comic["CreatorTypeIDCountList"],
+            comic["CreatorIDList"])
+        for publisher in comic["PublisherID"]:
+            publisherID.add(publisher)
+        for series in comic["SeriesID"]:
+            seriesID.add(series)
+        for arc in comic["StoryArcIDList"]:
+            storyArcID.add(arc)
+        for creator in comic["CreatorIDList"]:
+            creatorID.add(creator)
+        for character in comic["CharacterIDList"]:
+            characterID.add(character)
+    time.sleep(0.5)
+
+print(seriesID)
+print(storyArcID)
+print(characterID)
+
+ScrapeFunctions.PrintColumn(publisherIDsWriter, list(publisherID))
+ScrapeFunctions.PrintColumn(seriesIDsWriter, list(seriesID))
+ScrapeFunctions.PrintColumn(storyArcIDsWriter, list(storyArcID))
+ScrapeFunctions.PrintColumn(creatorIDsWriter, list(creatorID))
+ScrapeFunctions.PrintColumn(characterIDsWriter, list(characterID))
+
+comicsFile.close()
+comicCreatorsFile.close()
+comicCharactersFile.close()
+publisherIDs.close()
+seriesIDs.close()
+storyArcIDs.close()
+creatorIDs.close()
+characterIDs.close()
