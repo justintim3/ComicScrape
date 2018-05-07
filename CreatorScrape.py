@@ -26,58 +26,29 @@ def ScrapeCreator(url):
 
     return creator
 
-with open("Creators.csv", "a", newline = "") as csv_file:
-    writer = csv.writer(csv_file)
 
-    keyList = [
+
+creatorsList = ScrapeFunctions.ReadCSV("CreatorIDs.csv")
+print(creatorsList)
+
+creatorsFile = open("Creators.csv", "w", newline="")
+creatorsWriter = csv.writer(creatorsFile)
+creatorColumnList = [
         "CreatorID",
         "Name",
         "Bio",
         "Date of Birth",
-        "Birthplace"]
-        #"Writer",
-        #"Penciller",
-        #"Inker",
-        #"Colorist(",
-        #"Letterer",
-        #"Editor",
-        #"Cover Artist"
+        "Birthplace"
+]
+creatorsWriter.writerow(creatorColumnList)
 
-    print(keyList)
-    writer.writerow(keyList)
-    start = 1
-    end = 21
+for CreatorID in creatorsList:
+    url = "http://www.comicbookdb.com/creator.php?ID=" + str(CreatorID)
+    error = ScrapeFunctions.IsEmptyPage(url)
+    # if page exists (not 404 page not found error)
+    if not error:
+        creator = ScrapeCreator(url)
+        ScrapeFunctions.PrintTable(creatorsWriter, creatorColumnList, creator, " ", ".*' on Amazon.*")
+    time.sleep(0.5)
 
-    for CreatorID in range(start, end):
-        try:
-            creator = ScrapeCreator("http://www.comicbookdb.com/creator.php?ID=" + str(CreatorID))
-
-            valueList = []
-
-            for key in keyList:
-                if key in creator and type(creator[key]) is list:
-                    valueList.append(
-                        " ".join(
-                            list(
-                                filter(
-                                    lambda x: not (re.compile(".*' on Amazon.*").match(x)),
-                                    creator[key]
-                                )
-                            )
-                        )
-                    )
-                elif key in creator:
-                    valueList.append(creator[key])
-                else:
-                    valueList.append(None)
-
-            for x in range(0, end - start):
-                if valueList[x] is not None:
-                    print(valueList)
-                    writer.writerow(valueList)
-                    break
-
-            time.sleep(1)
-        except Exception as e:
-            #print(str(type(e)) + ": " + str(e))
-            pass
+creatorsFile.close()
