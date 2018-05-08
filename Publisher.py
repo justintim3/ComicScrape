@@ -20,7 +20,7 @@ def ScrapePublisher(url):
 
     publisher = {
         "PublisherID": int(url[url.find("=") + 1:]),
-        "Name": name_box.text.strip()
+        "Name": name_box.text.strip(),
     }
 
     publisher.update({x[0][0:-1]: x[1:] for x in info_box}) #build a dictionary with keys x[0][0:-1], values x[1:] for all elements x
@@ -29,32 +29,33 @@ def ScrapePublisher(url):
 
 
 publisherList = ScrapeFunctions.ReadCSV("PublisherIDs.csv")
-print(publisherList)
 
-publishersFile = open("Publishers.csv", "w", newline="")
+publishersFile = open("Publishers.csv", "w", newline="", encoding="utf-8")
 publishersWriter = csv.writer(publishersFile)
-publishersColumnList = [
-        "PublisherID",
-        "Name",
-        "Website",
-        "Notes",
-        "Titles"
+publisherColumnList = [
+    "PublisherID",
+    "Name",
+    "Website",
+    "Notes",
+    "Titles"
 ]
-publishersWriter.writerow(publishersColumnList)
 
+print(publisherColumnList)
+publishersWriter.writerow(publisherColumnList)
 
+#start = 1
+#end = 21
+#for CharacterID in range(start, end):
 for PublisherID in publisherList:
-    url = "http://http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID)
+    url = "http://www.comicbookdb.com/publisher.php?ID=" + str(PublisherID)
     error = ScrapeFunctions.IsEmptyPage(url)
     # if page exists (not 404 page not found error)
     if not error:
         publisher = ScrapePublisher(url)
-        ScrapeFunctions.PrintTable(publishersWriter, publishersColumnList, publisher
-            , " ", ".*Click here for a history of this publisher's logos.*")
+        ScrapeFunctions.PrintTable(publishersWriter, publisherColumnList, publisher,
+            " ", ".*Click here for a history of this publisher's logos.*")
     time.sleep(0.5)
 
-publishersFile.close()
-
-#lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
+# lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
 #   re.compile(".*Click here for a history of this publisher's logos.*").match(x)),
 #   publisher[key]

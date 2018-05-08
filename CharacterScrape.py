@@ -11,7 +11,7 @@ def ScrapeCharacter(url):
 
     name_box = soup.find("span", attrs={"class": "page_headline"})
     info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
-    info_box = ScrapeFunctions.HigherOrderListSplit (
+    info_box = ScrapeFunctions.HigherOrderListSplit(
         ScrapeFunctions.Traverse(info),
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
@@ -30,9 +30,8 @@ def ScrapeCharacter(url):
     return character
 
 characterList = ScrapeFunctions.ReadCSV("CharacterIDs.csv")
-print(characterList)
 
-charactersFile = open("Characters.csv", "w", newline="")
+charactersFile = open("Characters.csv", "w", newline="", encoding="utf-8")
 charactersWriter = csv.writer(charactersFile)
 characterColumnList = [
     "CharacterID",
@@ -43,10 +42,11 @@ characterColumnList = [
     "Weaknesses",
     "Bio"
 ]
+print(characterColumnList)
 charactersWriter.writerow(characterColumnList)
 
 #start = 1
-#end = 11
+#end = 21
 #for CharacterID in range(start, end):
 for CharacterID in characterList:
     url = "http://www.comicbookdb.com/character.php?ID=" + str(CharacterID)

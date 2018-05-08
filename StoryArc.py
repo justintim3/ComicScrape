@@ -1,6 +1,5 @@
 import urllib.request as urllib2
 import bs4
-import re
 import time
 import csv
 import ScrapeFunctions
@@ -24,19 +23,20 @@ def ScrapeStoryArc(url):
         "Issues": IssueIDList,
         "Character": CharacterIDList
     }
-    
+
     return arc
 
+
 storyArcList = ScrapeFunctions.ReadCSV("StoryArcIDs.csv")
-print(storyArcList)
 
 storyArcsFile = open("StoryArcs.csv", "w", newline="")
 storyArcsWriter = csv.writer(storyArcsFile)
 storyArcColumncList = [
-        "ArcTitle",
-        "Issues",
-        "Character",
+    "ArcTitle",
+    "Issues",
+    "Character",
 ]
+print(storyArcColumncList)
 storyArcsWriter.writerow(storyArcColumncList)
 
 for StoryArcID in storyArcList:

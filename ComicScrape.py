@@ -96,7 +96,7 @@ def ScrapeComic(url):
 
 
 start = 1
-end = 50
+end = 101
 
 publisherID = set()
 seriesID = set()
@@ -104,14 +104,14 @@ storyArcID = set()
 creatorID = set()
 characterID = set()
 
-comicsFile = open("Comics.csv", "w", newline="")
-comicCreatorsFile = open("ComicCreators.csv", "w", newline="")
-comicCharactersFile = open("ComicCharacters.csv", "w", newline="")
-publisherIDs = open("PublisherIDs.csv", "w", newline="")
-seriesIDs = open("SeriesIDs.csv", "w", newline="")
-storyArcIDs = open("StoryArcIDs.csv", "w", newline="")
-creatorIDs = open("CreatorIDs.csv", "w", newline="")
-characterIDs = open("CharacterIDs.csv", "w", newline="")
+comicsFile = open("Comics.csv", "w", newline="", encoding="utf-8")
+comicCreatorsFile = open("ComicCreators.csv", "w", newline="", encoding="utf-8")
+comicCharactersFile = open("ComicCharacters.csv", "w", newline="", encoding="utf-8")
+publisherIDs = open("PublisherIDs.csv", "w", newline="", encoding="utf-8")
+seriesIDs = open("SeriesIDs.csv", "w", newline="", encoding="utf-8")
+storyArcIDs = open("StoryArcIDs.csv", "w", newline="", encoding="utf-8")
+creatorIDs = open("CreatorIDs.csv", "w", newline="", encoding="utf-8")
+characterIDs = open("CharacterIDs.csv", "w", newline="", encoding="utf-8")
 
 comicsWriter = csv.writer(comicsFile)
 comicCreatorsWriter = csv.writer(comicCreatorsFile)
@@ -144,6 +144,7 @@ comicCreatorIDColumnList = [
     "CreatorID"
 ]
 
+print(comicColumnList)
 comicsWriter.writerow(comicColumnList)
 comicCreatorsWriter.writerow(comicCreatorIDColumnList)
 comicCharactersWriter.writerow(comicCharIDColumnList)

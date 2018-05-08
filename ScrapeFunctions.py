@@ -125,7 +125,6 @@ def ReadCSVColumns(filePath, desiredCols):
 def IsEmptyPage(url):
     page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
-
     error = soup.find("h2")
     error2 = str(soup.find("span", attrs={"class": "page_headline"})).find("You Must Be Logged In") != -1
     #print(error is not None)
@@ -142,10 +141,12 @@ def PrintTable(writer, keyList, dictionary, joinStr, lamda):
                 valueList.append(
                     joinStr.join(
                         ListStringReplace("''", "\\'",
-                            list(
-                                filter(
-                                    lambda x: not (re.compile(lamda).match(x)),
-                                    dictionary[key]
+                            ListStringReplace("\"", '\\"',
+                                list(
+                                    filter(
+                                        lambda x: not (re.compile(lamda).match(x)),
+                                        dictionary[key]
+                                    )
                                 )
                             )
                         )
