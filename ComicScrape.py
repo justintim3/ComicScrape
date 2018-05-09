@@ -105,22 +105,26 @@ creatorID = set()
 characterID = set()
 
 comicsFile = open("Comics.csv", "w", newline="", encoding="utf-8")
-comicCreatorsFile = open("ComicCreators.csv", "w", newline="", encoding="utf-8")
-comicCharactersFile = open("ComicCharacters.csv", "w", newline="", encoding="utf-8")
 publisherIDs = open("PublisherIDs.csv", "w", newline="", encoding="utf-8")
 seriesIDs = open("SeriesIDs.csv", "w", newline="", encoding="utf-8")
 storyArcIDs = open("StoryArcIDs.csv", "w", newline="", encoding="utf-8")
 creatorIDs = open("CreatorIDs.csv", "w", newline="", encoding="utf-8")
 characterIDs = open("CharacterIDs.csv", "w", newline="", encoding="utf-8")
+#JunctionTables
+comicCreatorsFile = open("ComicCreators.csv", "w", newline="", encoding="utf-8")
+comicCharactersFile = open("ComicCharacters.csv", "w", newline="", encoding="utf-8")
+comicPublishersFile = open("ComicPublishers.csv", "w", newline="", encoding="utf-8")
 
 comicsWriter = csv.writer(comicsFile)
-comicCreatorsWriter = csv.writer(comicCreatorsFile)
-comicCharactersWriter = csv.writer(comicCharactersFile)
 publisherIDsWriter = csv.writer(publisherIDs)
 seriesIDsWriter = csv.writer(seriesIDs)
 storyArcIDsWriter = csv.writer(storyArcIDs)
 creatorIDsWriter = csv.writer(creatorIDs)
 characterIDsWriter = csv.writer(characterIDs)
+#JunctionTables
+comicCreatorsWriter = csv.writer(comicCreatorsFile)
+comicCharactersWriter = csv.writer(comicCharactersFile)
+comicPublishersWriter = csv.writer(comicPublishersFile)
 
 comicColumnList = [
     "ComicID",
@@ -134,25 +138,31 @@ comicColumnList = [
     "Format",
     "Synopsis"
 ]
-comicCharIDColumnList = [
-    "ComicID",
-    "CharacterID"
-]
 comicCreatorIDColumnList = [
     "ComicID",
     "CreatorTypeID",
     "CreatorID"
 ]
+comicCharIDColumnList = [
+    "ComicID",
+    "CharacterID"
+]
+comicPubIDColumnList = [
+    "ComicID",
+    "PublisherID"
+]
 
 print(comicColumnList)
 comicsWriter.writerow(comicColumnList)
-comicCreatorsWriter.writerow(comicCreatorIDColumnList)
-comicCharactersWriter.writerow(comicCharIDColumnList)
 publisherIDsWriter.writerow(["PublisherID"])
 seriesIDsWriter.writerow(["SeriesID"])
 storyArcIDsWriter.writerow(["StoryArcID"])
 creatorIDsWriter.writerow(["CreatorID"])
 characterIDsWriter.writerow(["CharacterID"])
+
+comicCreatorsWriter.writerow(comicCreatorIDColumnList)
+comicCharactersWriter.writerow(comicCharIDColumnList)
+comicPublishersWriter.writerow(comicPubIDColumnList)
 
 for ComicID in range(start, end):
     url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
@@ -162,6 +172,7 @@ for ComicID in range(start, end):
         comic = ScrapeComic(url)
         ScrapeFunctions.PrintTable(comicsWriter, comicColumnList, comic, ", ", ".*[Aa]dd/remove.*")
         ScrapeFunctions.PrintJunctionTable(comicCharactersWriter, ComicID, comic["CharacterIDList"])
+        ScrapeFunctions.PrintJunctionTable(comicPublishersWriter, ComicID, list(comic["PublisherID"]))
         ScrapeFunctions.Print3JunctionTable(
             comicCreatorsWriter,
             ComicID,
@@ -180,9 +191,9 @@ for ComicID in range(start, end):
             characterID.add(character)
     time.sleep(0.5)
 
-print(seriesID)
-print(storyArcID)
-print(characterID)
+#print(seriesID)
+#print(storyArcID)
+#print(characterID)
 
 ScrapeFunctions.PrintColumn(publisherIDsWriter, list(publisherID))
 ScrapeFunctions.PrintColumn(seriesIDsWriter, list(seriesID))
@@ -191,10 +202,11 @@ ScrapeFunctions.PrintColumn(creatorIDsWriter, list(creatorID))
 ScrapeFunctions.PrintColumn(characterIDsWriter, list(characterID))
 
 comicsFile.close()
-comicCreatorsFile.close()
-comicCharactersFile.close()
 publisherIDs.close()
 seriesIDs.close()
 storyArcIDs.close()
 creatorIDs.close()
 characterIDs.close()
+comicCreatorsFile.close()
+comicCharactersFile.close()
+comicPublishersFile.close()
