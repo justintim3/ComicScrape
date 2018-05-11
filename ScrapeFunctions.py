@@ -51,6 +51,15 @@ def FindURL(string, aList, begTag, begString, endString):
             return str(aList[x])[begin:end]
 
 
+#Search until link is found
+def FindURL2(string, aList, begTag, begString, begAdjust, endString):
+    for x in range(begTag, len(aList)):
+        if string in str(aList[x]):
+            begin = str(aList[x]).find(begString) + len(begString) + begAdjust
+            end = str(aList[x]).find(endString)
+            return str(aList[x])[begin:end]
+
+
 #Search until link is found and return index
 def FindURLIndex(string, aList):
     for x in range(63, len(aList)):
@@ -90,14 +99,14 @@ def ListStringReplace(sub, repl, list):
     return list
 
 
-def ReadCSV(filePath):
+def ReadCSV(filePath, desiredCol):
     try:
         with open(filePath, "r") as csvfile:
             column = []
             reader = csv.reader(csvfile)
             list_data = list(reader)
             for x in range(1, len(list_data)):
-                column.append(list_data[x][0])
+                column.append(list_data[x][desiredCol])
             return column
     except Exception as e:
         print(str(type(e)) + ": " + str(e))
@@ -141,7 +150,7 @@ def PrintTable(writer, keyList, dictionary, joinStr, lamda):
                 valueList.append(
                     joinStr.join(
                         ListStringReplace("''", "\\'",
-                            ListStringReplace("\"", '\\"',
+                            ListStringReplace("\"", "\\'",
                                 list(
                                     filter(
                                         lambda x: not (re.compile(lamda).match(x)),
@@ -169,7 +178,7 @@ def PrintJunctionTable(writer, ID, IDList):
         for x in range(0, len(IDList)):
             list.append(ID)
             list.append(IDList[x])
-            print(list)
+            #print(list)
             writer.writerow(list)
             list.clear()
     except Exception as e:
@@ -192,7 +201,7 @@ def Print3JunctionTable(writer, ID, TypeIDList, TypeIDCountList, IDList):
             list.append(TypeIDList[type])
             list.append(IDList[x])
             count += 1
-            print(list)
+            #print(list)
             writer.writerow(list)
             list.clear()
     except Exception as e:

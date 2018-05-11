@@ -16,11 +16,12 @@ def ScrapeCharacter(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
+    id = url[url.find("ID=") + 3:]
     img = soup.find_all("img")
-    ImageURL = ScrapeFunctions.FindURL("graphics/comic_graphics/", img, 0, "comic_graphics/", "\"/")
+    ImageURL = ScrapeFunctions.FindURL2("graphics/comic_graphics/", img, 0, id + "_", -len(id) - 1, "\"/>")
 
     character = {
-        "CharacterID": int(url[url.find("=") + 1:]),
+        "CharacterID": int(id),
         "Name": name_box.text.strip(),
         "ImageURL": ImageURL
     }
@@ -29,7 +30,7 @@ def ScrapeCharacter(url):
 
     return character
 
-characterList = ScrapeFunctions.ReadCSV("CharacterIDs.csv")
+characterList = ScrapeFunctions.ReadCSV("CharacterIDs.csv", 0)
 
 charactersFile = open("Characters.csv", "w", newline="", encoding="utf-8")
 charactersWriter = csv.writer(charactersFile)
@@ -45,8 +46,8 @@ characterColumnList = [
 print(characterColumnList)
 charactersWriter.writerow(characterColumnList)
 
-#start = 1
-#end = 21
+#start = 2
+#end = 3
 #for CharacterID in range(start, end):
 for CharacterID in characterList:
     url = "http://www.comicbookdb.com/character.php?ID=" + str(CharacterID)

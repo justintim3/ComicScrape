@@ -9,16 +9,11 @@ def ScrapeComic(url):
     page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
 
-    info = soup.find_all("td", attrs={"valign": "top", "align": "left"})
     creators = soup.find_all("td", attrs={"valign": "top", "width": "366", "align": "left"})
     miscellaneous = soup.find_all("td", attrs={"colspan": "3", "valign": "top"})
 
     series_box = soup.find("span", attrs={"class": "page_headline"})
     issue_box = soup.find("span", attrs={"class": "page_subheadline"})
-    info_box = ScrapeFunctions.HigherOrderListSplit(
-        ScrapeFunctions.Traverse(info),
-        lambda x: re.compile(".*:$").match(x)
-    )[1:]  # list with delimited list using list comprehension
     creators_box = ScrapeFunctions.HigherOrderListSplit(
         ScrapeFunctions.Traverse(creators),
         lambda x: re.compile(".*:$").match(x)
@@ -28,25 +23,16 @@ def ScrapeComic(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:]
 
+    id = url[url.find("ID=") + 3:]
     link = soup.find_all("a")
     img = soup.find_all("img")
     end = ScrapeFunctions.FindURLIndex("review_add.php?", link)
-    ImageURL = ScrapeFunctions.FindURL("graphics/comic_graphics/", img, 0, "comic_graphics/", "\" width=")
+    ImageURL = ScrapeFunctions.FindURL2("graphics/comic_graphics/", img, 0, id + "_", -len(id) - 1,"\" width=")
     SeriesID = ScrapeFunctions.FindURL("title.php", link, 63, "ID=", "\">")
     PublisherID = ScrapeFunctions.FindURL("publisher", link, 63, "ID=", "\">")
     CharacterIDList = ScrapeFunctions.FindAllURLs("\"character.php", link, 63, end, "ID=", "\">")
     CreatorIDList = ScrapeFunctions.FindAllURLs("\"creator.php", link, 63, end, "ID=", "\">")
     StoryArcIDList = ScrapeFunctions.FindAllURLs("\"storyarc.php", link, 63, end, "ID=", "\">")
-
-    #publisher
-    #index = 0
-    #for x in range(20, len(info_box[12])):
-    #    if "<span class='st_facebook_hcount' displayText='Facebook'></span>" in info_box[12][x]:
-    #        index = x - 1
-    #        break
-    #if info_box[12][index] == ")":
-    #    index = index - 1
-    #publisher = info_box[12][index]
 
     #remove
     title = issue_box.text.strip().replace("\"", "")
@@ -58,7 +44,7 @@ def ScrapeComic(url):
     ]
 
     comic = {
-        "ComicID": int(url[url.find("=") + 1:]),
+        "ComicID": int(id),
         "Series": series_box.text.strip().split(" - ")[0],
         "SeriesID": SeriesID,
         #"Publisher": publisher,
@@ -114,6 +100,7 @@ characterIDs = open("CharacterIDs.csv", "w", newline="", encoding="utf-8")
 comicCreatorsFile = open("ComicCreators.csv", "w", newline="", encoding="utf-8")
 comicCharactersFile = open("ComicCharacters.csv", "w", newline="", encoding="utf-8")
 comicPublishersFile = open("ComicPublishers.csv", "w", newline="", encoding="utf-8")
+comicStoryArcsFile = open("ComicStoryArcs.csv", "w", newline="", encoding="utf-8")
 
 comicsWriter = csv.writer(comicsFile)
 publisherIDsWriter = csv.writer(publisherIDs)
@@ -125,6 +112,7 @@ characterIDsWriter = csv.writer(characterIDs)
 comicCreatorsWriter = csv.writer(comicCreatorsFile)
 comicCharactersWriter = csv.writer(comicCharactersFile)
 comicPublishersWriter = csv.writer(comicPublishersFile)
+comicStoryArcsWriter = csv.writer(comicStoryArcsFile)
 
 comicColumnList = [
     "ComicID",
@@ -151,6 +139,10 @@ comicPubIDColumnList = [
     "ComicID",
     "PublisherID"
 ]
+comicStoryArcIDColumnList = [
+    "ComicID",
+    "StoryArcID"
+]
 
 print(comicColumnList)
 comicsWriter.writerow(comicColumnList)
@@ -163,6 +155,7 @@ characterIDsWriter.writerow(["CharacterID"])
 comicCreatorsWriter.writerow(comicCreatorIDColumnList)
 comicCharactersWriter.writerow(comicCharIDColumnList)
 comicPublishersWriter.writerow(comicPubIDColumnList)
+comicStoryArcsWriter.writerow(comicStoryArcIDColumnList)
 
 for ComicID in range(start, end):
     url = "http://www.comicbookdb.com/issue.php?ID=" + str(ComicID)
@@ -173,16 +166,17 @@ for ComicID in range(start, end):
         ScrapeFunctions.PrintTable(comicsWriter, comicColumnList, comic, ", ", ".*[Aa]dd/remove.*")
         ScrapeFunctions.PrintJunctionTable(comicCharactersWriter, ComicID, comic["CharacterIDList"])
         ScrapeFunctions.PrintJunctionTable(comicPublishersWriter, ComicID, list(comic["PublisherID"]))
+        ScrapeFunctions.PrintJunctionTable(comicStoryArcsWriter, ComicID, comic["StoryArcIDList"])
         ScrapeFunctions.Print3JunctionTable(
             comicCreatorsWriter,
             ComicID,
             comic["CreatorTypeIDList"],
             comic["CreatorTypeIDCountList"],
             comic["CreatorIDList"])
-        for publisher in comic["PublisherID"]:
-            publisherID.add(publisher)
-        for series in comic["SeriesID"]:
-            seriesID.add(series)
+
+        #Add ID's to set to ensure unique IDs
+        publisherID.add(comic["PublisherID"])
+        seriesID.add(comic["SeriesID"])
         for arc in comic["StoryArcIDList"]:
             storyArcID.add(arc)
         for creator in comic["CreatorIDList"]:

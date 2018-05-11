@@ -29,7 +29,7 @@ def ScrapeSeries(url):
 
     return series
 
-seriesList = ScrapeFunctions.ReadCSV("SeriesIDs.csv")
+seriesList = ScrapeFunctions.ReadCSV("SeriesIDs.csv", 0)
 
 seriesFile = open("Series.csv", "w", newline="", encoding="utf-8")
 seriesPubFile = open("SeriesPublisher.csv", "w", newline="", encoding="utf-8")

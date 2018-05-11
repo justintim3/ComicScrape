@@ -15,11 +15,12 @@ def ScrapeCreator(url):
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
+    id = url[url.find("ID=") + 3:]
     img = soup.find_all("img")
-    ImageURL = ScrapeFunctions.FindURL("graphics/comic_graphics/", img, 0, "comic_graphics/", "\"/")
+    ImageURL = ScrapeFunctions.FindURL2("graphics/comic_graphics/", img, 0, id + "_", -len(id) - 1, "\"/>")
 
     creator = {
-        "CreatorID": int(url[url.find("=") + 1:]),
+        "CreatorID": int(id),
         "Name": name_box.text.strip(),
         "ImageURL": ImageURL
     }
@@ -29,7 +30,7 @@ def ScrapeCreator(url):
     return creator
 
 
-creatorsList = ScrapeFunctions.ReadCSV("CreatorIDs.csv")
+creatorsList = ScrapeFunctions.ReadCSV("CreatorIDs.csv", 0)
 
 creatorsFile = open("Creators.csv", "w", newline="", encoding="utf-8")
 creatorsWriter = csv.writer(creatorsFile)
