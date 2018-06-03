@@ -4,30 +4,19 @@ import csv
 import re
 
 # traverses an HTML tag tree via depth first traversal and returns a list of text
-def Traverse(Tags):
+def Traverse(Tags, brReplace):
     result = []
     for tag in Tags:
         if tag.string and tag.string.strip():
             result.append(tag.string.strip())
         elif hasattr(tag, "contents") and tag.contents:
-            result.extend(Traverse(tag.contents))
+            result.extend(Traverse(tag.contents, brReplace))
+        elif tag.name == "br" and result:
+            result.append(brReplace)
         else:
             pass
+    #print(result)
     return result
-
-
-def TraverseLinks(Tags):
-    result = []
-    for tag in Tags:
-        if not (tag.string and tag.string.strip()):
-            result.append(tag)
-        elif hasattr(tag, "contents") and tag.contents:
-            print("test")
-            result.extend(TraverseLinks(tag.contents))
-        else:
-            pass
-    return result
-
 
 # splits a list into a list of sublists based on a lambda that returns a boolean
 def HigherOrderListSplit(sequence, l):
@@ -134,32 +123,47 @@ def ReadCSVColumns(filePath, desiredCols):
 def IsEmptyPage(url):
     page = urllib2.urlopen(url)
     soup = bs4.BeautifulSoup(page, "html.parser")
-    error = soup.find("h2")
+    error = False
+    if soup.find("h2"):
+        error = True
     error2 = str(soup.find("span", attrs={"class": "page_headline"})).find("You Must Be Logged In") != -1
-    #print(error is not None)
+    #print(error)
     #print(error2)
 
-    return error is not None or error2
+    return error or error2
 
 
-def PrintTable(writer, keyList, dictionary, joinStr, lamda):
+def PrintTable(writer, keyList, dictionary, joinStr, regex, removeString):
     try:
         valueList = []
         for key in keyList:
             if key in dictionary and type(dictionary[key]) is list:
-                valueList.append(
-                    joinStr.join(
-                        ListStringReplace("''", "\\'",
-                            ListStringReplace("\"", "\\'",
-                                list(
-                                    filter(
-                                        lambda x: not (re.compile(lamda).match(x)),
+                stringApp = joinStr.join(
+                    ListStringReplace("''", "\'",
+                        ListStringReplace("\"", "\'",
+                            list(
+                                filter(
+                                    lambda x: not (re.compile(regex).match(x)),
                                         dictionary[key]
-                                    )
                                 )
                             )
                         )
                     )
+                )
+                strLength = len(removeString)
+
+                while stringApp.startswith(removeString) or stringApp.startswith(" "):
+                    if stringApp.startswith(removeString):
+                        stringApp = stringApp[strLength:]
+                    elif stringApp.startswith(" "):
+                        stringApp = stringApp[1:]
+                while stringApp.endswith(removeString) or stringApp.endswith(" "):
+                    if stringApp.endswith(removeString):
+                        stringApp = stringApp[:-strLength]
+                    elif stringApp.endswith(" "):
+                        stringApp = stringApp[:-1]
+                valueList.append(
+                    stringApp
                 )
             elif key in dictionary:
                 valueList.append(dictionary[key])
@@ -191,19 +195,21 @@ def Print3JunctionTable(writer, ID, TypeIDList, TypeIDCountList, IDList):
         list = []
         count = 0
         type = 0
-        for x in range(0, len(IDList)):
-            list.append(ID)
-
+        x = 0
+        end = len(IDList)
+        while x < end:
             if count == int(TypeIDCountList[type]):
                 count = 0
                 type +=1
-
-            list.append(TypeIDList[type])
-            list.append(IDList[x])
-            count += 1
-            #print(list)
-            writer.writerow(list)
-            list.clear()
+            else:
+                if int(TypeIDCountList[type]) != 0:
+                    list.append(ID)
+                    list.append(TypeIDList[type])
+                    list.append(IDList[x])
+                    writer.writerow(list)
+                    list.clear()
+                    x += 1
+                    count += 1
     except Exception as e:
         print(str(type(e)) + ": " + str(e))
         pass

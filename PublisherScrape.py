@@ -14,7 +14,7 @@ def ScrapePublisher(url):
     name_box = soup.find("span", attrs={"class": "page_subheadline"})
 
     info_box = ScrapeFunctions.HigherOrderListSplit(
-        ScrapeFunctions.Traverse(info),
+        ScrapeFunctions.Traverse(info, "|_|"),
         lambda x: re.compile(".*:$").match(x)
     )[1:] #list with delimited list using list comprehension
 
@@ -53,7 +53,7 @@ for PublisherID in publisherList:
     if not error:
         publisher = ScrapePublisher(url)
         ScrapeFunctions.PrintTable(publishersWriter, publisherColumnList, publisher,
-            " ", ".*Click here for a history of this publisher's logos.*")
+            " ", ".*Click here for a history of this publisher's logos.*", "|_|")
     time.sleep(0.5)
 
 # lambda x: not (re.compile(".*[Aa]dd/remove.*").match(x) or
